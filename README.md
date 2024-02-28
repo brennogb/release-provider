@@ -19,6 +19,17 @@ Github action to open releases following [conventional-commits](https://www.conv
 
 See [standard-version](https://github.com/conventional-changelog/standard-version#commit-message-convention-at-a-glance) for more details.
 
+## Inputs
+
+| Name              | Type      | Description |
+| -------           | ------    | ----------- |
+| `token`           | string    | Github Token with write permissions **Required**|
+| `release-version` | string    | Version you want to release, in the formart MAJOR.MINOR.PATH **Optional**|
+| `origin-branch`   | string    | Branch from where the release should be opened, usually develop **Required**|
+| `target-branch`   | string    | Branch where the release should be merged, usually master or main **Required**|
+| `as-draft`        | bool      | Boolean flag to open as draft or not **Default: False**|
+| `pr-template`     | string    | Template to be used as PR description **Default: "PR opened by [release-provider](https://github.com/brennogb/release-provider)"** |
+
 ## Usage
 
 ### Example Workflow file
@@ -54,16 +65,6 @@ jobs:
           pr-template: |
             Pull request body is here
 ```
-### Inputs
-
-| Name              | Type      | Description |
-| -------           | ------    | ----------- |
-| `token`           | string    | Github Token with write permissions **Required**|
-| `release-version` | string    | Version you want to release, in the formart MAJOR.MINOR.PATH **Optional**|
-| `origin-branch`   | string    | Branch from where the release should be opened, usually develop **Required**|
-| `target-branch`   | string    | Branch where the release should be merged, usually master or main **Required**|
-| `as-draft`        | bool      | Boolean flag to open as draft or not **Default: False**|
-| `pr-template`     | string    | Template to be used as PR description **Default: "PR opened by [release-provider](https://github.com/brennogb/release-provider)"** |
 
 ## Contributing
 
