@@ -1,0 +1,85 @@
+name: 'Release Provider'
+author: 'Brenno Gomes'
+description: 'Create a release branch updating changelog and tags with standard-version then open a pull request.'
+branding:
+  icon: 'git-pull-request'
+  color: 'orange'
+inputs:
+  token:
+    description: 'Github Token with write permissions'
+    required: true
+  release-version:
+    description: 'Version to be released'
+    required: true
+  origin-branch:
+    description: 'Branch from where the release should be open, usually develop'
+    required: true
+  target-branch:
+    description: 'Branch where the release should be merged, usually master or main'
+    required: true
+  pr-template:
+    description: 'Template used as PR description'
+    required: false
+    default: 'PR opened by [release-provider](https://github.com/brennogb/release-provider)'
+  as-draft:
+    description: 'Boolean flag to open as draft'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check Runner OS
+      if: ${{ runner.os != 'Linux' }}
+      shell: bash
+      run: |
+        echo "::error title=⛔ Error::Support Linux Only"
+        exit 1
+    
+    - name: Create release
+      shell: bash
+      run: |
+        VERSION=v${{ github.event.inputs.version }}
+        
+        if ! [[ "$VERSION" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+          echo "::error title=⛔ Error::Release version is in unsupported format"
+          exit 1
+        fi
+
+        RELEASE_BRANCH=release/$VERSION
+
+        if git tag | grep -q $VERSION; then
+          echo "::error title=⛔ Error::Tag already exists"
+          exit 1
+        fi
+
+        if git branch -a | grep -q $RELEASE_BRANCH; then
+          echo "::error title=⛔ Error::Release branch already exists"
+          exit 1
+        fi
+        
+        echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+
+        git config --global user.email ${{ github.actor }}@noreply
+        git config --global user.name ${{ github.actor }}
+        
+        git checkout ${{ inputs['origin-branch'] }}
+
+        git checkout -b $RELEASE_BRANCH
+
+        npx standard-version --release-as $VERSION
+
+        git push --set-upstream origin $RELEASE_BRANCH --follow-tags
+    
+    - name: 'Create release pull request'
+      id: create-release-pull-request
+      uses: thomaseizinger/create-pull-request@1.3.1
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+      with:
+        head: release/${{ env.RELEASE_VERSION }}
+        base: main
+        labels: release
+        draft: ${{ inputs['as-draft'] }} 
+        title: release/${{ env.RELEASE_VERSION }}
+        body: ${{ inputs['pr-template'] }}
